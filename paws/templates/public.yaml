@@ -35,7 +35,7 @@ spec:
           name: pawshomes
       volumes:
       - hostPath:
-          path: /data/project/paws/userhomes
+          path: /mnt/project/paws/userhomes
         name: pawshomes
 ---
 
@@ -74,7 +74,7 @@ spec:
           name: pawshomes
       volumes:
       - hostPath:
-          path: /data/project/paws/userhomes
+          path: /mnt/project/paws/userhomes
         name: pawshomes
 ---
 apiVersion: v1
