@@ -110,10 +110,10 @@ jupyterhub:
     extraVolumes:
     - name: homes
       hostPath:
-        path: /data/project
+        path: /mnt/project
     - name: dumps
       hostPath:
-        path: /public/dumps
+        path: /mnt/public/dumps
     # Without this, dumps becomes inaccessible and can hang the host
     - name: dumps-src1
       hostPath:
