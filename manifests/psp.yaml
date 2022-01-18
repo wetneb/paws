@@ -42,13 +42,15 @@ spec:
     - 'hostPath'
     - 'persistentVolumeClaim'
   allowedHostPaths:
-    - pathPrefix: '/public/dumps'
+    - pathPrefix: '/tmp'
+      readOnly: false
+    - pathPrefix: '/mnt/public/dumps'
       readOnly: true
     - pathPrefix: '/mnt/nfs'
       readOnly: true
     - pathPrefix: '/var/lib/sss/pipes'
       readOnly: false
-    - pathPrefix: '/data/project'
+    - pathPrefix: '/mnt/project'
       readOnly: false
 ---
 apiVersion: policy/v1beta1
@@ -142,7 +144,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: paws-psp
-  namespace: prod
+  namespace: paws-dev
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -151,20 +153,20 @@ subjects:
 # For all most accounts in the prod (paws) namespace
 - kind: ServiceAccount
   name: hub
-  namespace: prod
+  namespace: paws-dev
 - kind: ServiceAccount
   name: default
-  namespace: prod
+  namespace: paws-dev
 - kind: ServiceAccount
   name: hook-image-awaiter
-  namespace: prod
+  namespace: paws-dev
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: paws-psp-public
-  namespace: prod
+  namespace: paws-dev
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -173,7 +175,7 @@ subjects:
 # For the paws-public service account in the prod (paws) namespace
 - kind: ServiceAccount
   name: paws-public
-  namespace: prod
+  namespace: paws-dev
 ---
 # The deploy service account for the deploy hook needs a freer hand, I'm afraid
 # We could also experiment with giving this lesser privs than this.
@@ -183,7 +185,7 @@ metadata:
   name: deploy-hook-psp-binding
 subjects:
 - kind: ServiceAccount
-  namespace: prod
+  namespace: paws-dev
   name: deploy
 roleRef:
   kind: ClusterRole

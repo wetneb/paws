@@ -188,8 +188,11 @@ jupyterhub:
                   # Since otherwise the volumes list will grow each time
                   # the spawner stops and starts!
                   homedir = '/data/project/paws/userhomes/{}'.format(identity['sub'])
+                  #homedir = '/tmp/{}'.format(identity['sub']) # this "works" if you go in and chmod 777 the /tmp/<dir>
                   # Create the homedir so docker doesn't do it as root
-                  os.makedirs(homedir, mode=0o755, exist_ok=True)
+                  os.makedirs(homedir, mode=0o777, exist_ok=True)
+                  #os.makedirs('/tmp/foo', mode=0o777, exist_ok=True)
+                  print('/tmp/foo is something to print')
                   spawner.volumes = [
                       {
                           'name': 'home',
@@ -197,7 +200,7 @@ jupyterhub:
                       },
                       {
                           'name': 'dumps',
-                          'hostPath': { 'path': '/public/dumps' }
+                          'hostPath': { 'path': '/mnt/public/dumps' }
                       },
                       {
                           'name': 'dumps-src1',
@@ -264,6 +267,7 @@ jupyterhub:
       runAsUser: 52771
   ingress: 
     enabled: true
+    annotations: {kubernetes.io/ingress.class: "nginx"}
     hosts:
       - hub.paws.local
   # We are not on an autoscaling cluster, so we don't want this
@@ -280,6 +284,7 @@ jupyterhub:
       name: quay.io/wikimedia-paws-prod/singleuser
       tag: pr-121 # singleuser tag managed by github actions
       pullPolicy: Always
+    #cmd: ["sh", "-c", "sleep 50000"]
     memory:
       guarantee: 1G
       limit: 3G

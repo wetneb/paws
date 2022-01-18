@@ -47,7 +47,7 @@ spec:
   capacity:
     storage: 1Gi
   hostPath:
-    path: /public/dumps
+    path: /mnt/public/dumps
 ---
 apiVersion: batch/v1
 kind: Job
