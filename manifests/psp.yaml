@@ -42,8 +42,6 @@ spec:
     - 'hostPath'
     - 'persistentVolumeClaim'
   allowedHostPaths:
-    - pathPrefix: '/tmp'
-      readOnly: false
     - pathPrefix: '/mnt/public/dumps'
       readOnly: true
     - pathPrefix: '/mnt/nfs'
