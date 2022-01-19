@@ -142,7 +142,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: paws-psp
-  namespace: paws-dev
+  namespace: prod
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -151,20 +151,20 @@ subjects:
 # For all most accounts in the prod (paws) namespace
 - kind: ServiceAccount
   name: hub
-  namespace: paws-dev
+  namespace: prod
 - kind: ServiceAccount
   name: default
-  namespace: paws-dev
+  namespace: prod
 - kind: ServiceAccount
   name: hook-image-awaiter
-  namespace: paws-dev
+  namespace: prod
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: paws-psp-public
-  namespace: paws-dev
+  namespace: prod
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -173,7 +173,7 @@ subjects:
 # For the paws-public service account in the prod (paws) namespace
 - kind: ServiceAccount
   name: paws-public
-  namespace: paws-dev
+  namespace: prod
 ---
 # The deploy service account for the deploy hook needs a freer hand, I'm afraid
 # We could also experiment with giving this lesser privs than this.
@@ -183,7 +183,7 @@ metadata:
   name: deploy-hook-psp-binding
 subjects:
 - kind: ServiceAccount
-  namespace: paws-dev
+  namespace: prod
   name: deploy
 roleRef:
   kind: ClusterRole
