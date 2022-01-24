@@ -39,6 +39,7 @@ spec:
     - 'projected'
     - 'secret'
     - 'downwardAPI'
+    - 'hostPath'
     - 'nfs'
     - 'persistentVolumeClaim'
   allowedHostPaths:
@@ -92,6 +93,7 @@ spec:
     - 'projected'
     - 'secret'
     - 'downwardAPI'
+    - 'hostPath'
     - 'nfs'
     - 'persistentVolumeClaim'
   allowedHostPaths:

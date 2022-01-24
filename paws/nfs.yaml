@@ -1,0 +1,131 @@
+jupyterhub:
+  hub:
+    extraVolumes:
+    - name: homes
+      nfs:
+        server: 192.168.122.109
+        path: /mnt/project
+    - name: dumps
+      nfs:
+        server: 192.168.122.109
+        path: /mnt/public/dumps
+    # Without this, dumps becomes inaccessible and can hang the host
+    - name: dumps-src1
+      nfs:
+        server: 192.168.122.109
+        path: /mnt/nfs/dumps-labstore1007.wikimedia.org
+    - name: dumps-src2
+      nfs:
+        server: 192.168.122.109
+        path: /mnt/nfs/dumps-labstore1006.wikimedia.org
+    extraConfig: 
+      myConfig: |
+          import hmac
+          import hashlib
+          import subprocess
+          import os
+          import json
+          from oauthenticator.mediawiki import MWOAuthenticator
+          from tornado import gen
+
+          from tornado.escape import url_escape
+          from tornado.httpclient import AsyncHTTPClient
+          
+
+          class Auth(MWOAuthenticator):
+              enable_auth_state = True
+              def normalize_username(self, username):
+                  return username
+          
+              async def refresh_user(self, user, handler=None):
+                  client = AsyncHTTPClient()
+                  try:
+                      response = await client.fetch(f"https://meta.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&meta=globaluserinfo&guiuser={url_escape(user.name)}",
+                                                     user_agent="PAWS-authenticator/0.1 (https://phabricator.wikimedia.org/tag/paws/)" )
+                      locked = bool(json.loads(response.body)['query']['globaluserinfo'].get("locked", False))
+                      if locked:
+                          await user.spawner.stop(now=True)
+                          return False
+                      else:
+                          return True
+                  except Exception as e:
+                      self.log.error(f"Error checking for Wikimedia lock on user {user.name}: {e}")
+                      return False  # Notebook cookies keep user logged in
+
+              @gen.coroutine
+              def pre_spawn_start(self, user, spawner):
+                  auth_state = yield user.get_auth_state()
+                  identity = auth_state['MEDIAWIKI_USER_IDENTITY']
+                  spawner.environment['ACCESS_KEY'] = auth_state['ACCESS_TOKEN_KEY']
+                  spawner.environment['ACCESS_SECRET'] = auth_state['ACCESS_TOKEN_SECRET']
+                  spawner.environment['CLIENT_ID'] = self.client_id
+                  spawner.environment['CLIENT_SECRET'] = self.client_secret
+                  spawner.environment['USER'] = identity['username']
+                  # Set rather than use .extend!
+                  # Since otherwise the volumes list will grow each time
+                  # the spawner stops and starts!
+                  homedir = '/data/project/paws/userhomes/{}'.format(identity['sub'])
+                  homemnt = '/mnt/project/paws/userhomes/{}'.format(identity['sub'])
+                  # Create the homedir so docker doesn't do it as root
+                  os.makedirs(homedir, mode=0o755, exist_ok=True)
+                  spawner.volumes = [
+                      {
+                          'name': 'home',
+                          'nfs': { 'server': '192.168.122.109', 'path': homemnt }
+                      },
+                      {
+                          'name': 'dumps',
+                          'nfs': { 'server': '192.168.122.109', 'path': '/mnt/public/dumps' }
+                      },
+                      {
+                          'name': 'dumps-src1',
+                          'nfs': { 'server': '192.168.122.109', 'path': '/mnt/nfs/dumps-labstore1007.wikimedia.org' }
+                      },
+                      {
+                          'name': 'dumps-src2',
+                          'nfs': { 'server': '192.168.122.109', 'path': '/mnt/nfs/dumps-labstore1006.wikimedia.org' }
+                      }
+                  ]
+                  spawner.volume_mounts = [
+                      {
+                          'name': 'home',
+                          'mountPath': '/home/paws'
+                      },
+                      {
+                          'name': 'dumps',
+                          'mountPath': '/public/dumps',
+                          'readOnly': True
+                      },
+                      {
+                          'name': 'dumps-src1',
+                          'mountPath': '/mnt/nfs/dumps-labstore1007.wikimedia.org',
+                          'readOnly': True
+
+                      },
+                      {
+                          'name': 'dumps-src2',
+                          'mountPath': '/mnt/nfs/dumps-labstore1006.wikimedia.org',
+                          'readOnly': True
+
+                      },
+                  ]
+          
+                  spawner.environment['MYSQL_HOST'] = os.environ['MYSQL_SERVICE_HOST']
+                  mysql_password = hmac.new(
+                      os.environ['MYSQL_HMAC_KEY'].encode('utf-8'),
+                      identity['username'].encode('utf-8'),
+                      hashlib.sha256
+                  ).hexdigest()
+                  spawner.environment['MYSQL_USERNAME'] = identity['username']
+                  spawner.environment['MYSQL_PASSWORD'] = mysql_password
+     
+          c.JupyterHub.authenticator_class = Auth
+          c.JupyterHub.authenticate_prometheus = False
+          c.JupyterHub.logo_file = '/srv/jupyterhub/PAWS.svg'
+          c.JupyterHub.template_vars = {
+              'announcement': ('<span class="alert-success">'
+                              'Welcome to PAWS. '
+                              'Please <a href="//phabricator.wikimedia.org/tag'
+                              '/paws/"> report any issues on Phabricator </a>'
+                              '</span>')
+          }
