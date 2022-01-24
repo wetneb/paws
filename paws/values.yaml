@@ -109,20 +109,22 @@ jupyterhub:
       upgrade: true
     extraVolumes:
     - name: homes
-      hostPath:
+      nfs:
+        server: 192.168.122.109
         path: /mnt/project
     - name: dumps
-      hostPath:
+      nfs:
+        server: 192.168.122.109
         path: /mnt/public/dumps
     # Without this, dumps becomes inaccessible and can hang the host
     - name: dumps-src1
-      hostPath:
+      nfs:
+        server: 192.168.122.109
         path: /mnt/nfs/dumps-labstore1007.wikimedia.org
-        type: DirectoryOrCreate
     - name: dumps-src2
-      hostPath:
+      nfs:
+        server: 192.168.122.109
         path: /mnt/nfs/dumps-labstore1006.wikimedia.org
-        type: DirectoryOrCreate
     extraVolumeMounts:
     - name: homes
       mountPath: /data/project
@@ -194,19 +196,19 @@ jupyterhub:
                   spawner.volumes = [
                       {
                           'name': 'home',
-                          'hostPath': { 'path': homemnt }
+                          'nfs': { 'server': '192.168.122.109', 'path': homemnt }
                       },
                       {
                           'name': 'dumps',
-                          'hostPath': { 'path': '/mnt/public/dumps' }
+                          'nfs': { 'server': '192.168.122.109', 'path': '/mnt/public/dumps' }
                       },
                       {
                           'name': 'dumps-src1',
-                          'hostPath': { 'path': '/mnt/nfs/dumps-labstore1007.wikimedia.org' }
+                          'nfs': { 'server': '192.168.122.109', 'path': '/mnt/nfs/dumps-labstore1007.wikimedia.org' }
                       },
                       {
                           'name': 'dumps-src2',
-                          'hostPath': { 'path': '/mnt/nfs/dumps-labstore1006.wikimedia.org' }
+                          'nfs': { 'server': '192.168.122.109', 'path': '/mnt/nfs/dumps-labstore1006.wikimedia.org' }
                       }
                   ]
                   spawner.volume_mounts = [

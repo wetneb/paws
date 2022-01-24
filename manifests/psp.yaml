@@ -39,7 +39,7 @@ spec:
     - 'projected'
     - 'secret'
     - 'downwardAPI'
-    - 'hostPath'
+    - 'nfs'
     - 'persistentVolumeClaim'
   allowedHostPaths:
     - pathPrefix: '/mnt/public/dumps'
@@ -92,7 +92,7 @@ spec:
     - 'projected'
     - 'secret'
     - 'downwardAPI'
-    - 'hostPath'
+    - 'nfs'
     - 'persistentVolumeClaim'
   allowedHostPaths:
     - pathPrefix: '/public/dumps'
