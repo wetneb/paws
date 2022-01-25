@@ -36,11 +36,12 @@ spec:
       volumes:
 {{ if .Values.localdev.enabled }}
       - hostPath:
+          path: /mnt/project/paws/userhomes
 {{ else }}
       - nfs:
-          server: 192.168.122.109
+          server: nfs-tools-project.svc.eqiad.wmnet
+          path: /srv/misc/shared/paws/project/paws/userhomes
 {{ end }}
-          path: /mnt/project/paws/userhomes
         name: pawshomes
 ---
 
@@ -80,11 +81,12 @@ spec:
       volumes:
 {{ if .Values.localdev.enabled }}
       - hostPath:
+          path: /mnt/project/paws/userhomes
 {{ else }}
       - nfs:
-          server: 192.168.122.109
+          server: nfs-tools-project.svc.eqiad.wmnet
+          path: /srv/misc/shared/paws/project/paws/userhomes
 {{ end }}
-          path: /mnt/project/paws/userhomes
         name: pawshomes
 ---
 apiVersion: v1
