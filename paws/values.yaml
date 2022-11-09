@@ -251,9 +251,9 @@ jupyterhub:
       - --LabApp.collaborative=true
     fsGid: 52771
     image:
-      name: quay.io/wikimedia-paws-prod/singleuser
-      tag: pr-223 # singleuser tag managed by github actions
-      pullPolicy: Always
+      name: sparql
+      tag: '02' # singleuser tag managed by github actions
+      pullPolicy: Never
     memory:
       guarantee: 1G
       limit: 3G

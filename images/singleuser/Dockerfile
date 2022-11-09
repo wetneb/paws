@@ -93,164 +93,164 @@ RUN apt-get install --yes \
 RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
     locale-gen
 
-## Install R ##
-# Use newer version of R
-# Binary packages from packagemanager.rstudio.com work against this.
-# Base R from Focal is only 3.6.
-ADD r/cran.gpg /etc/apt/trusted.gpg.d/cran.gpg
-ADD r/cran.list /etc/apt/sources.list.d/cran.list
-
-# Install languages needed and their core dev packages
-RUN apt-get update --yes && \
-    apt-get install --yes \
-        r-recommended \
-        r-base-dev \
-        r-cran-littler \
-        git \
-        curl \
-        gdebi \
-        # For R's mysql
-        libmariadb-dev \
-        # For R's curl
-        libcurl4-openssl-dev \
-        # for ipython kernels
-        libzmq3-dev \
-        # For R's devtools
-        libssl-dev
-
-# Install RStudio
-# give access to libssl1.1 for rstudio-server
-RUN echo "deb http://archive.ubuntu.com/ubuntu/ focal main restricted" > /etc/apt/sources.list.d/focal.list
-RUN apt-get update
-
-ENV RSTUDIO_SERVER_URL https://download2.rstudio.org/server/bionic/amd64/rstudio-server-2022.02.3-492-amd64.deb
-RUN curl --silent --location --fail ${RSTUDIO_SERVER_URL} > /tmp/rstudio-server.deb
-RUN gdebi -n /tmp/rstudio-server.deb && rm /tmp/rstudio-server.deb
-# remove focal repo
-RUN rm /etc/apt/sources.list.d/focal.list && apt-get update
-
-
-# Create user owned R libs dir
-# This lets users temporarily install packages
-ENV R_LIBS_USER /srv/r
-RUN install -d -o ${NB_USER} -g ${NB_USER} ${R_LIBS_USER}
-
-# R_LIBS_USER is set by default in /etc/R/Renviron, which RStudio loads.
-# We uncomment the default, and set what we wanna - so it picks up
-# the packages we install. Without this, RStudio doesn't see the packages
-# that R does.
-# Stolen from https://github.com/jupyterhub/repo2docker/blob/6a07a48b2df48168685bb0f993d2a12bd86e23bf/repo2docker/buildpacks/r.py
-RUN sed -i -e '/^R_LIBS_USER=/s/^/#/' /etc/R/Renviron && \
-    echo "R_LIBS_USER=${R_LIBS_USER}" >> /etc/R/Renviron
-
-USER ${NB_USER}
-RUN pip install --no-cache-dir \
-    jupyter-server-proxy \
-    git+https://github.com/toolforge/jupyter-rsession-proxy.git@57d89b4
-
-# Set CRAN mirror to rspm before we install anything
-COPY r/Rprofile.site /usr/lib/R/etc/Rprofile.site
-# RStudio needs its own config
-COPY r/rsession.conf /etc/rstudio/rsession.conf
-
-# Install the R Kernel
-RUN r -e "install.packages('IRkernel', version='1.3')" && \
-    r -e "IRkernel::installspec(prefix='${VENV_DIR}')" && \
-    rm -rf /tmp/downloaded_packages
-
-## Done installing R
-
-USER root
-
-## Setup OpenRefine
-ENV OPENREFINE_DIR /srv/openrefine
-ENV PATH=$PATH:$OPENREFINE_DIR
-RUN mkdir -p ${OPENREFINE_DIR} && cd ${OPENREFINE_DIR} && \
-    curl -L 'https://oss.sonatype.org/service/local/artifact/maven/content?r=releases&g=org.openrefine&a=openrefine&v=3.6.2&c=linux&p=tar.gz' | tar xzf - --strip=1
-
-USER ${NB_USER}
-ENV REFINE_DIR /home/paws
-RUN pip install --no-cache-dir \
-    git+https://github.com/innovationOUtside/nb_serverproxy_openrefine@f10677f15cab1f1a0f6a4e80ee65e3598a041fae
-
-## Done setting up OpenRefine
-
-USER root
-
-# Machine-learning type stuff
-RUN apt-get update && \
-    apt-get install --yes \
-    # For scipy & friends
-    libblas-dev \
-    liblapack-dev \
-    libquadmath0 \
-    gfortran \
-    # for lxml
-    libxml2-dev \
-    libxslt1-dev \
-    # for matplotlib
-    libfreetype6-dev \
-    libpng-dev \
-    # for ipython kernels
-    libzmq3-dev \
-    libreadline-dev \
-    # For PDFs and stuff
-    pandoc \
-    texlive-xetex
-
-
-## Install Julia
-# Install Julia directories and depot path
-
-ENV PATH=$PATH:/srv/julia/bin
-ENV JULIA_DEPOT_PATH /srv/julia-depot/
-RUN install -d -o ${NB_USER} -g ${NB_USER} /srv/julia
-RUN install -d -o ${NB_USER} -g ${NB_USER} ${JULIA_DEPOT_PATH}
-
-USER ${NB_USER}
-
-# install julia and julia kernel
-COPY install-julia /tmp/install-julia
-RUN /tmp/install-julia
-
-## Done Installing Julia
-
-
-RUN pip install --no-cache-dir \
-    retrolab \
-    jupyterlab-link-share>=0.2.4 \
-    nbgitpuller \
-    voila \
-    bash_kernel
-
-# Install the bash kernel
-RUN python -m bash_kernel.install --sys-prefix
-
-
-
-# Install mass amount of python libraries!
-COPY --chown=tools.paws:tools.paws requirements.txt /tmp/requirements.txt
-
-RUN pip --no-cache-dir install -r /tmp/requirements.txt
-
-# Install pywikibot
-RUN git clone --branch $PYWIKIBOT_VERSION --recursive https://gerrit.wikimedia.org/r/pywikibot/core.git /srv/paws/pwb
-COPY --chown=tools.paws:tools.paws user-config.py /srv/paws/
-COPY --chown=tools.paws:tools.paws user-fixes.py /srv/paws/
-
-COPY install-pwb /usr/local/bin/
-RUN /usr/local/bin/install-pwb
-
-COPY install-extensions /usr/local/bin/
-RUN /usr/local/bin/install-extensions
-
-COPY banner /etc/bash.bashrc
-
-# use custom css to hide clusters tab
-COPY --chown=tools.paws:tools.paws hide_clusters_tab.css /home/paws/.jupyter/custom/custom.css
-
-# Setup custom config as needed
-#COPY jupyter_notebook_config.py /srv/paws/etc/jupyter/jupyter_notebook_config.py
+### Install R ##
+## Use newer version of R
+## Binary packages from packagemanager.rstudio.com work against this.
+## Base R from Focal is only 3.6.
+#ADD r/cran.gpg /etc/apt/trusted.gpg.d/cran.gpg
+#ADD r/cran.list /etc/apt/sources.list.d/cran.list
+#
+## Install languages needed and their core dev packages
+#RUN apt-get update --yes && \
+#    apt-get install --yes \
+#        r-recommended \
+#        r-base-dev \
+#        r-cran-littler \
+#        git \
+#        curl \
+#        gdebi \
+#        # For R's mysql
+#        libmariadb-dev \
+#        # For R's curl
+#        libcurl4-openssl-dev \
+#        # for ipython kernels
+#        libzmq3-dev \
+#        # For R's devtools
+#        libssl-dev
+#
+## Install RStudio
+## give access to libssl1.1 for rstudio-server
+#RUN echo "deb http://archive.ubuntu.com/ubuntu/ focal main restricted" > /etc/apt/sources.list.d/focal.list
+#RUN apt-get update
+#
+#ENV RSTUDIO_SERVER_URL https://download2.rstudio.org/server/bionic/amd64/rstudio-server-2022.02.3-492-amd64.deb
+#RUN curl --silent --location --fail ${RSTUDIO_SERVER_URL} > /tmp/rstudio-server.deb
+#RUN gdebi -n /tmp/rstudio-server.deb && rm /tmp/rstudio-server.deb
+## remove focal repo
+#RUN rm /etc/apt/sources.list.d/focal.list && apt-get update
+#
+#
+## Create user owned R libs dir
+## This lets users temporarily install packages
+#ENV R_LIBS_USER /srv/r
+#RUN install -d -o ${NB_USER} -g ${NB_USER} ${R_LIBS_USER}
+#
+## R_LIBS_USER is set by default in /etc/R/Renviron, which RStudio loads.
+## We uncomment the default, and set what we wanna - so it picks up
+## the packages we install. Without this, RStudio doesn't see the packages
+## that R does.
+## Stolen from https://github.com/jupyterhub/repo2docker/blob/6a07a48b2df48168685bb0f993d2a12bd86e23bf/repo2docker/buildpacks/r.py
+#RUN sed -i -e '/^R_LIBS_USER=/s/^/#/' /etc/R/Renviron && \
+#    echo "R_LIBS_USER=${R_LIBS_USER}" >> /etc/R/Renviron
+#
+#USER ${NB_USER}
+#RUN pip install --no-cache-dir \
+#    jupyter-server-proxy \
+#    git+https://github.com/toolforge/jupyter-rsession-proxy.git@57d89b4
+#
+## Set CRAN mirror to rspm before we install anything
+#COPY r/Rprofile.site /usr/lib/R/etc/Rprofile.site
+## RStudio needs its own config
+#COPY r/rsession.conf /etc/rstudio/rsession.conf
+#
+## Install the R Kernel
+#RUN r -e "install.packages('IRkernel', version='1.3')" && \
+#    r -e "IRkernel::installspec(prefix='${VENV_DIR}')" && \
+#    rm -rf /tmp/downloaded_packages
+#
+### Done installing R
+#
+#USER root
+#
+### Setup OpenRefine
+#ENV OPENREFINE_DIR /srv/openrefine
+#ENV PATH=$PATH:$OPENREFINE_DIR
+#RUN mkdir -p ${OPENREFINE_DIR} && cd ${OPENREFINE_DIR} && \
+#    curl -L 'https://oss.sonatype.org/service/local/artifact/maven/content?r=releases&g=org.openrefine&a=openrefine&v=3.6.2&c=linux&p=tar.gz' | tar xzf - --strip=1
+#
+#USER ${NB_USER}
+#ENV REFINE_DIR /home/paws
+#RUN pip install --no-cache-dir \
+#    git+https://github.com/innovationOUtside/nb_serverproxy_openrefine@f10677f15cab1f1a0f6a4e80ee65e3598a041fae
+#
+### Done setting up OpenRefine
+#
+#USER root
+#
+## Machine-learning type stuff
+#RUN apt-get update && \
+#    apt-get install --yes \
+#    # For scipy & friends
+#    libblas-dev \
+#    liblapack-dev \
+#    libquadmath0 \
+#    gfortran \
+#    # for lxml
+#    libxml2-dev \
+#    libxslt1-dev \
+#    # for matplotlib
+#    libfreetype6-dev \
+#    libpng-dev \
+#    # for ipython kernels
+#    libzmq3-dev \
+#    libreadline-dev \
+#    # For PDFs and stuff
+#    pandoc \
+#    texlive-xetex
+#
+#
+### Install Julia
+## Install Julia directories and depot path
+#
+#ENV PATH=$PATH:/srv/julia/bin
+#ENV JULIA_DEPOT_PATH /srv/julia-depot/
+#RUN install -d -o ${NB_USER} -g ${NB_USER} /srv/julia
+#RUN install -d -o ${NB_USER} -g ${NB_USER} ${JULIA_DEPOT_PATH}
+#
+#USER ${NB_USER}
+#
+## install julia and julia kernel
+#COPY install-julia /tmp/install-julia
+#RUN /tmp/install-julia
+#
+### Done Installing Julia
+#
+#
+#RUN pip install --no-cache-dir \
+#    retrolab \
+#    jupyterlab-link-share>=0.2.4 \
+#    nbgitpuller \
+#    voila \
+#    bash_kernel
+#
+## Install the bash kernel
+#RUN python -m bash_kernel.install --sys-prefix
+#
+#
+#
+## Install mass amount of python libraries!
+#COPY --chown=tools.paws:tools.paws requirements.txt /tmp/requirements.txt
+#
+#RUN pip --no-cache-dir install -r /tmp/requirements.txt
+#
+## Install pywikibot
+#RUN git clone --branch $PYWIKIBOT_VERSION --recursive https://gerrit.wikimedia.org/r/pywikibot/core.git /srv/paws/pwb
+#COPY --chown=tools.paws:tools.paws user-config.py /srv/paws/
+#COPY --chown=tools.paws:tools.paws user-fixes.py /srv/paws/
+#
+#COPY install-pwb /usr/local/bin/
+#RUN /usr/local/bin/install-pwb
+#
+#COPY install-extensions /usr/local/bin/
+#RUN /usr/local/bin/install-extensions
+#
+#COPY banner /etc/bash.bashrc
+#
+## use custom css to hide clusters tab
+#COPY --chown=tools.paws:tools.paws hide_clusters_tab.css /home/paws/.jupyter/custom/custom.css
+#
+## Setup custom config as needed
+##COPY jupyter_notebook_config.py /srv/paws/etc/jupyter/jupyter_notebook_config.py
 
 ## Install SPARQL
 USER root
@@ -260,8 +260,9 @@ RUN apt-get update && \
     graphviz
 
 USER ${NB_USER}
-RUN pip install --no-cache-dir sparqlkernel
-RUN python3 -m jupyter sparqlkernel install --sys-prefix
+RUN pip install git+https://github.com/vivian-rook/launcher@8a8aefd31ab483ab9da7670771c92faec46b4d11
+#RUN pip install --no-cache-dir sparqlkernel
+#RUN python3 -m jupyter sparqlkernel install --sys-prefix
 
 ## End SPARQL Install
 
