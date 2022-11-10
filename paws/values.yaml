@@ -252,7 +252,7 @@ jupyterhub:
     fsGid: 52771
     image:
       name: sparql
-      tag: '02' # singleuser tag managed by github actions
+      tag: '04' # singleuser tag managed by github actions
       pullPolicy: Never
     memory:
       guarantee: 1G

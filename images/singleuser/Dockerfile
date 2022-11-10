@@ -261,6 +261,7 @@ RUN apt-get update && \
 
 USER ${NB_USER}
 RUN pip install git+https://github.com/vivian-rook/launcher@8a8aefd31ab483ab9da7670771c92faec46b4d11
+RUN pip install git+https://github.com/vivian-rook/nb_serverproxy_openrefine@aae3bc2403ddf97c43dcf48c3b30edd9e54d4bdf
 #RUN pip install --no-cache-dir sparqlkernel
 #RUN python3 -m jupyter sparqlkernel install --sys-prefix
 
