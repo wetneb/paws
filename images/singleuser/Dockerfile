@@ -49,48 +49,48 @@ RUN pip install --prefix=/srv/paws --no-cache-dir \
 
 ## End minimal setup ##
 
-#USER root
-#
-## Setup nodesource, because node on Ubuntu is far too old to be useful
-#ADD node/nodesource.gpg /etc/apt/trusted.gpg.d/nodesource.gpg
-#ADD node/nodesource.list /etc/apt/sources.list.d/nodesource.list
-#
-## Base building utilities that'll always be required, probably
-#RUN apt-get update && \
-#    apt-get install --yes \
-#        git \
-#        locales \
-#        pkg-config \
-#        build-essential \
-#        gcc \
-#        apt-transport-https
-#
-#
-#RUN apt-get update --yes && \
-#    apt-get install --yes \
-#        python3-dev \
-#        openjdk-11-jdk \
-#        nodejs
-#
-## Utilities
-#RUN apt-get install --yes \
-#        curl \
-#        wget \
-#        less \
-#        dnsutils \
-#        emacs \
-#        links \
-#        nano \
-#        vim \
-#        lsof \
-#        mariadb-client
-#
-## pyaudio
-#RUN apt-get install --yes \
-#        portaudio19-dev
-#
-#RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
-#    locale-gen
+USER root
+
+# Setup nodesource, because node on Ubuntu is far too old to be useful
+ADD node/nodesource.gpg /etc/apt/trusted.gpg.d/nodesource.gpg
+ADD node/nodesource.list /etc/apt/sources.list.d/nodesource.list
+
+# Base building utilities that'll always be required, probably
+RUN apt-get update && \
+    apt-get install --yes \
+        git \
+        locales \
+        pkg-config \
+        build-essential \
+        gcc \
+        apt-transport-https
+
+
+RUN apt-get update --yes && \
+    apt-get install --yes \
+        python3-dev \
+        openjdk-11-jdk \
+        nodejs
+
+# Utilities
+RUN apt-get install --yes \
+        curl \
+        wget \
+        less \
+        dnsutils \
+        emacs \
+        links \
+        nano \
+        vim \
+        lsof \
+        mariadb-client
+
+# pyaudio
+RUN apt-get install --yes \
+        portaudio19-dev
+
+RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
+    locale-gen
 #
 ### Install R ##
 ## Use newer version of R
@@ -260,8 +260,12 @@ RUN apt-get update && \
     graphviz
 
 USER ${NB_USER}
-RUN pip install git+https://github.com/vivian-rook/sparql-kernel@5df26c96bbf96bd1a60006fa63e563dec7db3285
-RUN python3 -m jupyter sparqlkernel install --sys-prefix
+RUN pip install git+https://github.com/vivian-rook/sparql-install-menu@baef4a56ee397289e522e039e5fbdc2cdaa32684
+#RUN pip install git+https://github.com/vivian-rook/sparql-cookie-mimerender-cookiecutter-ts@4e07a1e8235a12a23b14ba2aedfe8aea4c356013
+#RUN pip install git+https://github.com/vivian-rook/sparql-install-front@bcc5213da289fd961ca9999dd931f6db9651dcf2
+#RUN touch /tmp/foo
+#RUN pip install git+https://github.com/vivian-rook/sparql-kernel@5df26c96bbf96bd1a60006fa63e563dec7db3285
+#RUN python3 -m jupyter sparqlkernel install --sys-prefix
 
 ## End SPARQL Install
 
